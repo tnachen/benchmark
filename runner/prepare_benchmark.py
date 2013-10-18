@@ -34,6 +34,8 @@ def parse_args():
       help="Whether to include Shark")
   parser.add_option("-r", "--redshift", action="store_true", default=False,
       help="Whether to include Redshift")
+  parser.add_option("--drill", action="store_true", default=False,
+      help="Whether to include Drill")
 
   parser.add_option("-a", "--impala-host",
       help="Hostname of Impala state store node")
@@ -41,11 +43,15 @@ def parse_args():
       help="Hostname of Shark master node")
   parser.add_option("-c", "--redshift-host",
       help="Hostname of Redshift ODBC endpoint")
+  parser.add_option("--drill-host",
+      help="Hostname of Drill bit node")
 
   parser.add_option("-x", "--impala-identity-file",
       help="SSH private key file to use for logging into Impala node")
   parser.add_option("-y", "--shark-identity-file",
       help="SSH private key file to use for logging into Shark node")
+  parser.add_option("-z", "--drill-identity-file",
+      help="SSH private key file to use for logging into Drill node")
   parser.add_option("-u", "--redshift-username",
       help="Username for Redshift ODBC connection")
   parser.add_option("-p", "--redshift-password",
@@ -69,7 +75,7 @@ def parse_args():
 
   (opts, args) = parser.parse_args()
 
-  if not (opts.impala or opts.shark or opts.redshift):
+  if not (opts.impala or opts.shark or opts.redshift or opts.drill):
     parser.print_help()
     sys.exit(1)
 
@@ -102,6 +108,14 @@ def parse_args():
                         opts.aws_key is None):
     print >> stderr, \
         "Redshift requires host, username, password, db, and AWS credentials"
+    sys.exit(1)
+
+  if opts.drill and (opts.drill_identity_file is None or
+                     opts.drill_host is None or
+                     opts.aws_key_id is None or
+                     opts.aws_key is None):
+    print >> stderr, \
+        "Drill requires identity file, drill hostname, and AWS credentials"
     sys.exit(1)
   
   return opts
@@ -217,6 +231,10 @@ def prepare_shark_dataset(opts):
     "LOCATION \\\"/user/shark/benchmark/crawl\\\";\"")
 
   print "=== FINISHED CREATING BENCHMARK DATA ==="
+
+def prepare_drill_dataset(opts):
+
+
 
 def prepare_impala_dataset(opts):
   def ssh_impala(command): 
@@ -349,6 +367,8 @@ def main():
     prepare_shark_dataset(opts)
   if opts.redshift:
     prepare_redshift_dataset(opts)
+  if opts.drill:
+    prepare_drill_dataset(opts)
 
 if __name__ == "__main__":
   main()
